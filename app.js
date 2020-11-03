@@ -1,41 +1,51 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const bodyParser = require('body-parser');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+const cors = require('cors');
 
-var app = express();
+const PORT = process.env.PORT || 3000;
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+const indexRouter = require('./routes/index');
+const employeeRouter = require('./routes/employee');
 
-app.use(logger('dev'));
+const app = express();
+
+app.use(cors());
+app.use(morgan('dev'));
+
+app.use(function (request, response, next) {
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  response.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+  next();
+});
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/employees', employeeRouter);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+app.get('/', function(request, response) {
+  response.writeHead(200, {'Content-Type': 'text/html'});
+  response.write('Hello from the server');
+  response.end();
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+app.listen(PORT, () => {
+  console.log('Server is running on localhost:', PORT);
+})
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-module.exports = app;
+app.use(express.urlencoded({ extended: false }));
